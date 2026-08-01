@@ -548,6 +548,7 @@ function Ipv6SubPrefixPlanner({ baseAddr, basePrefix }) {
       {result?.error ? (
         <div style={{ color: C.danger, fontSize: "13px" }}>{result.error}</div>
       ) : result?.allocated?.length > 0 ? (
+        <>
         <div style={S.subPanel}>
           <SectionLabel>ALLOCATED SUB-PREFIXES</SectionLabel>
           {result.allocated.map((item, index) => (
@@ -583,6 +584,20 @@ function Ipv6SubPrefixPlanner({ baseAddr, basePrefix }) {
             </div>
           ))}
         </div>
+        <div style={{ ...S.subPanel, marginTop: "12px", overflowX: "auto" }}>
+          <SectionLabel>NETWORK ARCHITECTURE</SectionLabel>
+          <TopologyDiagram
+            title={`${baseAddr}/${basePrefix}`}
+            subnets={result.allocated.map((item, idx) => ({
+              label: item.name,
+              cidrLabel: `${item.network}/${item.prefix}`,
+              range: item.network,
+              usable: 6,
+              color: PALETTE[idx % PALETTE.length],
+            }))}
+          />
+        </div>
+        </>
       ) : null}
     </div>
   );
@@ -1065,12 +1080,15 @@ function BitBreakdown({ ip, cidr }) {
 /* Topology Diagram */
 function TopologyDiagram({ subnets, title }) {
   const n = subnets.length;
-  const width = Math.max(640, n * 185);
-  const height = 270;
+  const cardWidth = 220;
+  const minGap = 240;
+  const width = Math.max(760, (n + 1) * minGap);
+  const height = 285;
   const routerX = width / 2;
   const routerY = 50;
   const switchY = 120;
   const cardY = 155;
+  const cardH = 104;
   const gap = width / (n + 1);
   return (
     <div style={{ overflowX: "auto" }}>
@@ -1085,15 +1103,15 @@ function TopologyDiagram({ subnets, title }) {
           y={routerY - 26}
           textAnchor="middle"
           fontSize="11"
-          fill="#3d4f63"
+          fill="#6b7d94"
           fontFamily="'JetBrains Mono', monospace"
         >
           {title}
         </text>
         <rect
-          x={routerX - 52}
+          x={routerX - 60}
           y={routerY - 18}
-          width="104"
+          width="120"
           height="36"
           rx="8"
           fill="#0f1720"
@@ -1102,7 +1120,7 @@ function TopologyDiagram({ subnets, title }) {
         />
         <text
           x={routerX}
-          y={routerY + 7}
+          y={routerY + 5}
           textAnchor="middle"
           fontSize="13"
           fontWeight="700"
@@ -1113,7 +1131,7 @@ function TopologyDiagram({ subnets, title }) {
         </text>
         {subnets.map((s, i) => {
           const cx = gap * (i + 1);
-          const boxW = Math.min(gap - 20, 165);
+          const boxW = Math.min(gap - 20, cardWidth);
           const dotCount = Math.min(s.usable, 6);
           const extra = s.usable > 6 ? s.usable - 6 : 0;
           const col = s.color;
@@ -1126,21 +1144,21 @@ function TopologyDiagram({ subnets, title }) {
                 strokeWidth="1.5"
               />
               <rect
-                x={cx - 32}
+                x={cx - 36}
                 y={switchY - 12}
-                width="64"
+                width="72"
                 height="24"
                 rx="5"
                 fill="#0a1018"
                 stroke={col}
-                strokeWidth="1"
+                strokeWidth="1.2"
               />
               <text
                 x={cx}
                 y={switchY + 4}
                 textAnchor="middle"
                 fontSize="10"
-                fontWeight="600"
+                fontWeight="700"
                 fill={col}
                 fontFamily="'JetBrains Mono', monospace"
               >
@@ -1158,17 +1176,17 @@ function TopologyDiagram({ subnets, title }) {
                 x={cx - boxW / 2}
                 y={cardY}
                 width={boxW}
-                height="96"
-                rx="9"
+                height={cardH}
+                rx="10"
                 fill="#0f1720"
                 stroke={col}
-                strokeWidth="1.2"
+                strokeWidth="1.5"
               />
               <text
                 x={cx}
                 y={cardY + 22}
                 textAnchor="middle"
-                fontSize="12"
+                fontSize="13"
                 fontWeight="700"
                 fill="#e2e8f4"
                 fontFamily="Inter, sans-serif"
@@ -1179,7 +1197,8 @@ function TopologyDiagram({ subnets, title }) {
                 x={cx}
                 y={cardY + 40}
                 textAnchor="middle"
-                fontSize="10.5"
+                fontSize="11"
+                fontWeight="600"
                 fill={col}
                 fontFamily="'JetBrains Mono', monospace"
               >
@@ -1187,22 +1206,22 @@ function TopologyDiagram({ subnets, title }) {
               </text>
               <text
                 x={cx}
-                y={cardY + 56}
+                y={cardY + 58}
                 textAnchor="middle"
-                fontSize="9"
-                fill="#3d4f63"
+                fontSize="9.5"
+                fill="#6b7d94"
                 fontFamily="'JetBrains Mono', monospace"
               >
                 {s.range}
               </text>
               {Array.from({ length: dotCount }).map((_, di) => {
-                const totalW = dotCount * 13;
-                const startX = cx - totalW / 2 + 6.5;
+                const totalW = dotCount * 14;
+                const startX = cx - totalW / 2 + 7;
                 return (
                   <circle
                     key={di}
-                    cx={startX + di * 13}
-                    cy={cardY + 74}
+                    cx={startX + di * 14}
+                    cy={cardY + 77}
                     r="4"
                     fill={col}
                     opacity="0.9"
@@ -1212,7 +1231,7 @@ function TopologyDiagram({ subnets, title }) {
               {extra > 0 && (
                 <text
                   x={cx}
-                  y={cardY + 90}
+                  y={cardY + 95}
                   textAnchor="middle"
                   fontSize="9"
                   fill="#3d4f63"
@@ -1925,11 +1944,14 @@ function SecurityAndDevicesPanel() {
       )}
 
       {subTab === "devices" && (
+        <>
+        <SecurityNetworkDiagram />
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
             gap: "12px",
+            marginTop: "16px",
           }}
         >
           {devicesData.map((item) => (
@@ -1975,6 +1997,7 @@ function SecurityAndDevicesPanel() {
             </div>
           ))}
         </div>
+        </>
       )}
     </div>
   );
@@ -2866,6 +2889,7 @@ function OsiAndPortsPanel() {
       </div>
 
       {tab === "osi" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         <div
           style={{
             display: "grid",
@@ -2971,6 +2995,8 @@ function OsiAndPortsPanel() {
             </div>
           </div>
         </div>
+        <OsiNetworkDiagram selectedLayer={selectedLayer} />
+        </div>
       )}
 
       {tab === "ports" && (
@@ -3064,6 +3090,167 @@ function OsiAndPortsPanel() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   OSI Network Architecture Diagram
+--------------------------------------------------------- */
+function OsiNetworkDiagram({ selectedLayer }) {
+  const layerDeviceMap = {
+    1: "cable",
+    2: "switch",
+    3: "router",
+    4: "firewall",
+    5: null,
+    6: null,
+    7: null,
+  };
+  const h = layerDeviceMap[selectedLayer];
+  const tips = {
+    1: "Physical — Cables, NICs, Hubs & Repeaters transmit raw bits between devices.",
+    2: "Data Link — Switch forwards Ethernet frames using MAC address tables.",
+    3: "Network — Router routes IP packets between different subnets.",
+    4: "Transport — Firewalls & load balancers inspect TCP/UDP port numbers.",
+    5: "Session — Manages connection sessions between endpoints (e.g., NetBIOS, PPTP).",
+    6: "Presentation — Handles encryption, encoding and data format conversion (TLS, JPEG).",
+    7: "Application — User-facing protocols: HTTP, HTTPS, DNS, SMTP, FTP, DHCP.",
+  };
+  const bdr = (id, col) => (h === id ? col : C.border);
+  const txt = (id, col) => (h === id ? col : C.muted);
+  const ln  = (id, col) => (h === id ? col : C.borderSoft);
+  const lw  = (id) => (h === id ? 2.5 : 1.5);
+
+  return (
+    <div style={{ ...S.subPanel, marginTop: "16px", overflowX: "auto" }}>
+      <SectionLabel>ACTIVE LAYER — NETWORK TOPOLOGY</SectionLabel>
+      <svg
+        width="100%"
+        height="168"
+        viewBox="0 0 730 168"
+        style={{ maxWidth: "730px", display: "block", margin: "0 auto" }}
+      >
+        {/* Internet cloud */}
+        <ellipse cx="52" cy="84" rx="44" ry="27" fill={C.panel2} stroke={C.border} strokeWidth="1.5" />
+        <text x="52" y="81" textAnchor="middle" fill={C.muted} fontSize="10" fontWeight="700" fontFamily="'Inter', sans-serif">INTERNET</text>
+        <text x="52" y="94" textAnchor="middle" fill={C.faint} fontSize="8" fontFamily="'JetBrains Mono', monospace">WAN</text>
+
+        {/* Internet → NGFW */}
+        <line x1="96" y1="84" x2="148" y2="84" stroke={ln("firewall", C.pink)} strokeWidth={lw("firewall")} />
+        <rect x="148" y="61" width="84" height="46" rx="8" fill={C.panel2} stroke={bdr("firewall", C.pink)} strokeWidth={h === "firewall" ? 2 : 1.5} />
+        <text x="190" y="82" textAnchor="middle" fill={txt("firewall", C.pink)} fontSize="10" fontWeight="700" fontFamily="'Inter', sans-serif">NGFW</text>
+        <text x="190" y="96" textAnchor="middle" fill={C.faint} fontSize="8" fontFamily="'JetBrains Mono', monospace">L3–L7</text>
+
+        {/* NGFW → Router */}
+        <line x1="232" y1="84" x2="284" y2="84" stroke={ln("router", C.teal)} strokeWidth={lw("router")} />
+        <rect x="284" y="61" width="84" height="46" rx="8" fill={C.panel2} stroke={bdr("router", C.teal)} strokeWidth={h === "router" ? 2 : 1.5} />
+        <text x="326" y="82" textAnchor="middle" fill={txt("router", C.teal)} fontSize="10" fontWeight="700" fontFamily="'Inter', sans-serif">ROUTER</text>
+        <text x="326" y="96" textAnchor="middle" fill={C.faint} fontSize="8" fontFamily="'JetBrains Mono', monospace">Layer 3</text>
+
+        {/* Router → Switch */}
+        <line x1="368" y1="84" x2="420" y2="84" stroke={ln("switch", C.amber)} strokeWidth={lw("switch")} />
+        <rect x="420" y="61" width="84" height="46" rx="8" fill={C.panel2} stroke={bdr("switch", C.amber)} strokeWidth={h === "switch" ? 2 : 1.5} />
+        <text x="462" y="82" textAnchor="middle" fill={txt("switch", C.amber)} fontSize="10" fontWeight="700" fontFamily="'Inter', sans-serif">SWITCH</text>
+        <text x="462" y="96" textAnchor="middle" fill={C.faint} fontSize="8" fontFamily="'JetBrains Mono', monospace">Layer 2</text>
+
+        {/* Switch → 3 Hosts */}
+        {[34, 84, 134].map((y, i) => (
+          <g key={i}>
+            <line
+              x1="504" y1={i === 0 ? 72 : i === 1 ? 84 : 96}
+              x2="566" y2={y}
+              stroke={ln("cable", C.blue)} strokeWidth={lw("cable")}
+            />
+            <rect x="566" y={y - 14} width="68" height="28" rx="7" fill={C.panel2} stroke={bdr("cable", C.blue)} strokeWidth={h === "cable" ? 2 : 1.2} />
+            <text x="600" y={y + 4} textAnchor="middle" fill={txt("cable", C.blue)} fontSize="9" fontWeight="700" fontFamily="'Inter', sans-serif">HOST {i + 1}</text>
+          </g>
+        ))}
+
+        {h && (
+          <text
+            x="365" y="158"
+            textAnchor="middle"
+            fill={h === "firewall" ? C.pink : h === "router" ? C.teal : h === "switch" ? C.amber : C.blue}
+            fontSize="10" fontWeight="700" fontFamily="'Inter', sans-serif"
+          >
+            &#9650; Active Device — Layer {selectedLayer}
+          </text>
+        )}
+      </svg>
+      {tips[selectedLayer] && (
+        <div style={{ fontSize: "12px", color: C.muted, textAlign: "center", marginTop: "8px", lineHeight: "1.6" }}>
+          {tips[selectedLayer]}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   Security & Devices — Network Placement Diagram
+--------------------------------------------------------- */
+function SecurityNetworkDiagram() {
+  const boxes = [
+    { label: "INTERNET", sub: "WAN / ISP", x: 12,  y: 70, w: 76, h: 42, col: C.muted,   isCloud: true  },
+    { label: "NGFW",     sub: "L3–L7",    x: 132, y: 70, w: 76, h: 42, col: C.pink,   isCloud: false },
+    { label: "ROUTER",   sub: "Layer 3",  x: 252, y: 70, w: 76, h: 42, col: C.teal,   isCloud: false },
+    { label: "L3 SW",    sub: "L2 + L3",  x: 372, y: 70, w: 76, h: 42, col: C.violet,  isCloud: false },
+    { label: "L2 SW",    sub: "Layer 2",  x: 492, y: 26, w: 76, h: 42, col: C.blue,   isCloud: false },
+    { label: "Wi-Fi AP", sub: "L1 + L2",  x: 492, y: 114,w: 76, h: 42, col: C.amber,  isCloud: false },
+  ];
+  const links = [
+    [88, 91, 132, 91],
+    [208, 91, 252, 91],
+    [328, 91, 372, 91],
+    [448, 84, 492, 47],
+    [448, 98, 492, 135],
+  ];
+  const topHostLinks = [[568, 47, 606, 32],[568, 47, 606, 47],[568, 47, 606, 62]];
+  const botHostLinks = [[568, 135, 606, 120],[568, 135, 606, 135],[568, 135, 606, 150]];
+
+  return (
+    <div style={{ ...S.subPanel, marginBottom: "16px", overflowX: "auto" }}>
+      <SectionLabel>NETWORK PLACEMENT DIAGRAM</SectionLabel>
+      <svg
+        width="100%"
+        height="182"
+        viewBox="0 0 660 182"
+        style={{ maxWidth: "660px", display: "block", margin: "0 auto" }}
+      >
+        {links.map(([x1, y1, x2, y2], i) => (
+          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={C.borderSoft} strokeWidth="1.8" />
+        ))}
+        {[...topHostLinks, ...botHostLinks].map(([x1, y1, x2, y2], i) => (
+          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={C.borderSoft} strokeWidth="1.2" />
+        ))}
+
+        {boxes.map((d, i) =>
+          d.isCloud ? (
+            <g key={i}>
+              <ellipse cx={d.x + d.w / 2} cy={d.y + d.h / 2} rx={d.w / 2} ry={d.h / 2} fill={C.panel2} stroke={C.border} strokeWidth="1.5" />
+              <text x={d.x + d.w / 2} y={d.y + d.h / 2 - 4} textAnchor="middle" fill={C.muted} fontSize="9" fontWeight="700" fontFamily="'Inter', sans-serif">{d.label}</text>
+              <text x={d.x + d.w / 2} y={d.y + d.h / 2 + 9} textAnchor="middle" fill={C.faint} fontSize="7" fontFamily="'JetBrains Mono', monospace">{d.sub}</text>
+            </g>
+          ) : (
+            <g key={i}>
+              <rect x={d.x} y={d.y} width={d.w} height={d.h} rx="8" fill={C.panel2} stroke={`${d.col}55`} strokeWidth="1.5" />
+              <text x={d.x + d.w / 2} y={d.y + d.h / 2 - 4} textAnchor="middle" fill={d.col} fontSize="9" fontWeight="700" fontFamily="'Inter', sans-serif">{d.label}</text>
+              <text x={d.x + d.w / 2} y={d.y + d.h / 2 + 9} textAnchor="middle" fill={C.faint} fontSize="7" fontFamily="'JetBrains Mono', monospace">{d.sub}</text>
+            </g>
+          )
+        )}
+
+        {[32, 47, 62, 120, 135, 150].map((y, i) => (
+          <g key={i}>
+            <circle cx="622" cy={y} r="10" fill={C.panel2} stroke={`${C.blue}55`} strokeWidth="1.2" />
+            <text x="622" y={y + 4} textAnchor="middle" fill={C.faint} fontSize="8" fontWeight="700">H{(i % 3) + 1}</text>
+          </g>
+        ))}
+      </svg>
+      <div style={{ fontSize: "11px", color: C.faint, textAlign: "center", marginTop: "6px" }}>
+        Traffic flow: ISP → NGFW (deep packet inspection) → Router (L3 routing) → L3 Switch (inter-VLAN) → L2 Switch → Hosts &nbsp;/&nbsp; Wi-Fi AP → Wireless Clients
+      </div>
     </div>
   );
 }
@@ -3712,6 +3899,21 @@ ALLOCATED EQUAL SUBNETS:
                     </table>
                   </div>
                 )}
+                {vlsmResult && !vlsmResult.error && vlsmResult.allocated.length > 0 && (
+                  <div style={{ ...S.subPanel, marginTop: "16px", overflowX: "auto" }}>
+                    <SectionLabel>NETWORK ARCHITECTURE</SectionLabel>
+                    <TopologyDiagram
+                      title={`${vlsmBaseIp}/${vlsmBaseCidr}`}
+                      subnets={vlsmResult.allocated.map((a, i) => ({
+                        label: a.name,
+                        cidrLabel: `${a.network}/${a.cidr}`,
+                        range: `${a.firstHost} \u2013 ${a.lastHost}`,
+                        usable: a.usableHosts,
+                        color: PALETTE[i % PALETTE.length],
+                      }))}
+                    />
+                  </div>
+                )}
               </>
             )}
 
@@ -3828,6 +4030,21 @@ ALLOCATED EQUAL SUBNETS:
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+                {flsmResult && !flsmResult.error && flsmResult.allocated.length > 0 && (
+                  <div style={{ ...S.subPanel, marginTop: "16px", overflowX: "auto" }}>
+                    <SectionLabel>NETWORK ARCHITECTURE</SectionLabel>
+                    <TopologyDiagram
+                      title={`${vlsmBaseIp}/${vlsmBaseCidr} \u2192 /${flsmResult.newCidr}`}
+                      subnets={flsmResult.allocated.slice(0, 8).map((a, i) => ({
+                        label: a.name,
+                        cidrLabel: `/${a.cidr}`,
+                        range: `${a.firstHost} \u2013 ${a.lastHost}`,
+                        usable: a.usableHosts,
+                        color: PALETTE[i % PALETTE.length],
+                      }))}
+                    />
                   </div>
                 )}
               </>
